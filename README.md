@@ -1,99 +1,75 @@
-## Configurando o Ambiente para Análise Exploratória de Dados e Predição de Notas do IMDb
+# Agente de filmes · notas do IMDb
 
-Este README fornece instruções para configurar o ambiente no Google Colab e Jupyter Notebook, incluindo como baixar e utilizar o arquivo `dfbruto.csv` e os requisitos para executar o código de Análise Exploratória de Dados (EDA) e predição de notas do IMDb.
+Agente de IA que responde perguntas sobre os 999 filmes da base do IMDb, prevê a nota de um filme novo, explica o que mais pesa na nota, infere o gênero pela sinopse e recomenda filmes. A publicação de relatórios só acontece com aprovação humana.
 
-### 1. Pré-requisitos
+O projeto começou como o desafio de ciência de dados do programa Lighthouse (Indicium): análise exploratória, previsão da nota de *The Shawshank Redemption* e perguntas de negócio. A análise original continua em [`docs/original/`](docs/original/).
 
-* **Conexão com a internet:** Você precisará de uma conexão com a internet para baixar o arquivo `dfbruto.csv` e instalar as bibliotecas necessárias.
-* **Conta do Google:** Para usar o Google Colab, você precisará de uma conta do Google.
-* **Anaconda ou Miniconda:** Para usar o Jupyter Notebook, você precisará instalar o Anaconda ou Miniconda.
+![Dashboard](docs/img/dash.jpg)
 
-### 2. Baixando o arquivo `dfbruto.csv`
+## Como funciona
+**O modelo interpreta, o código calcula e confere, a pessoa aprova.**
 
-1. **Faça o download do arquivo:** Clique no seguinte link para baixar o arquivo `dfbruto.csv`: [https://github.com/henriquecm02/Desafio-Ciencia-de-Dados-Lighthouse/blob/main/dfbruto.csv](https://github.com/henriquecm02/LH_CD_HENRIQUE_COUTO_MACHADO/blob/main/dfbruto.csv)
-   
-2. **Salve o arquivo:** Salve o arquivo baixado  em um local acessível no seu computador.
+1. O Gemini lê a pergunta e escolhe as ferramentas, com saída em JSON Schema.
+2. As consultas são filtros seguros do pandas, sem execução de texto livre, e os modelos são do scikit-learn. O modelo de linguagem não calcula nada.
+3. O código confere se cada número da resposta saiu de uma ferramenta. Se algum não saiu, a resposta vira **revisar**.
+4. `publicar_relatorio` é sensível e fica pendente até ser aprovado.
 
-### 3. Google Colab
+Sem `GEMINI_API_KEY`, o agente roda em modo offline, com roteamento por palavras-chave.
 
-**Passo 1:** Acesse o Google Colab: [https://colab.research.google.com/](https://colab.research.google.com/)
+| Ferramenta | O que faz |
+|---|---|
+| `consultar_filmes` | Filtra por gênero, diretor, ator, ano, nota e duração; ordena por nota, votos, faturamento etc. |
+| `estatisticas` | Médias e medianas de um gênero, diretor ou da base toda |
+| `prever_nota` · `prever_shawshank` | Nota prevista para um filme novo, com um Pipeline salvo (pré-processamento + modelo) |
+| `comparar_modelos` | RMSE em validação cruzada: média, linear, random forest e GBM |
+| `explicar_nota` | Importância por permutação de cada variável |
+| `genero_pela_sinopse` | TF-IDF + regressão logística um-contra-todos |
+| `recomendar` | Recomendação pela nota ponderada por número de votos |
+| `fatores_de_faturamento` | Correlações e faturamento mediano por gênero |
+| `publicar_relatorio` | Sensível: exige aprovação |
 
-**Passo 2:** Crie um novo notebook ou abra um existente.
+## Resultados medidos
+Validação cruzada de 5 dobras, nos 999 filmes:
 
-**Passo 3:** Instale as bibliotecas necessárias:
+| Modelo | RMSE | MAE |
+|---|---|---|
+| prever a média (linha de base) | 0,272 | 0,219 |
+| regressão linear | 0,229 | 0,181 |
+| **random forest** | **0,186** | **0,147** |
+| GBM | 0,191 | 0,148 |
 
-```python
-!pip install pandas numpy matplotlib seaborn scikit-learn pickle
-```
+- **Shawshank:** previsão de **8,78**; a nota real é 9,3. A versão original reportava 9,30 exatos, mas o número não se reproduz: aquele pipeline só funcionava com o estado do notebook (o faturamento estava como texto no treino e como número na previsão, e o encoder dos gêneros não era salvo). O erro de 0,52 aqui é esperado, porque nenhum filme da base passa de 9,2 e árvores não extrapolam.
+- **O que pesa na nota** (aumento do RMSE ao embaralhar cada coluna): número de votos +0,204, Meta Score +0,080, faturamento +0,064 e ano +0,060.
+- **Gênero pela sinopse:** o gênero principal acerta em 67,3% dos filmes, em validação cruzada.
 
-**Passo 4:** Carregue o arquivo `dfbruto.csv` para o Google Colab:
+A avaliação contra gabarito (`python eval/run_eval.py`) acertou **21 de 21 casos**. As respostas esperadas são calculadas direto da base bruta, de forma independente das ferramentas: total de filmes do Nolan, filme de maior faturamento, duração mediana, nota média dos dramas e o ano de *Apollo 13* corrigido (a base traz "PG"). A avaliação também cobre as metas dos modelos, 10 perguntas de roteamento e a conferência de números.
 
-```python
-from google.colab import files
-uploaded = files.upload()
-```
+Esse gabarito pegou um erro de verdade durante o desenvolvimento: as estatísticas eram calculadas só sobre os 50 primeiros filmes de cada consulta. Foi corrigido.
 
-**Passo 5:** Substitua o caminho do arquivo no código com o caminho correto para o seu arquivo no Google Colab:
+## Limites
+- **Número de votos domina a previsão.** Ele só existe depois do lançamento, então a "previsão" serve para entender a nota, não para prever um filme antes de estrear. Sem os votos, o erro sobe.
+- A base tem só os 1.000 filmes mais bem avaliados (notas entre 7,6 e 9,2). O modelo não sabe nada sobre filmes medianos ou ruins.
+- O classificador de gênero usa sinopses em inglês e erra em um de cada três filmes no gênero principal.
+- A escolha de ferramentas com o Gemini real ainda não foi medida. Para medir, rode o workflow manual `eval-gemini` com o secret `GEMINI_API_KEY`.
 
-```python
-df = pd.read_csv('dfbruto.csv', sep=",")
-```
-
-**Passo 6:** Execute o código de EDA e predição.
-
-### 4. Jupyter Notebook
-
-**Passo 1:** Instale o Anaconda ou Miniconda: [https://www.anaconda.com/](https://www.anaconda.com/)
-
-**Passo 2:** Crie um novo ambiente virtual (opcional, mas recomendado):
-
+## Como rodar
 ```bash
-conda create -n eda_env python=3.8
-conda activate eda_env
+pip install -e ".[dev]"
+streamlit run app/streamlit_app.py   # dashboard, previsão e agente
+python eval/run_eval.py              # avaliação contra gabarito
+pytest -q                            # testes, sem rede
 ```
 
-**Passo 3:** Instale as bibliotecas necessárias:
+![Agente](docs/img/agente.jpg)
 
-```bash
-pip install pandas numpy matplotlib seaborn scikit-learn pickle
+## Estrutura
 ```
-
-**Passo 4:** Crie um novo notebook Jupyter:
-
-```bash
-jupyter notebook
+data/dfbruto.csv        base do desafio (999 filmes)
+src/filmeagent/
+  agentcore.py          cliente Gemini, laço de ferramentas, conferência de números, aprovações
+  core.py               limpeza, modelos, validação cruzada, classificador de gênero, consultas
+  tools.py              ferramentas do agente e roteamento offline
+app/streamlit_app.py    Dashboard · Prever nota · Agente · Avaliação · Aprovações
+eval/run_eval.py        gabarito
+docs/original/          notebook, script e respostas da versão original
 ```
-
-**Passo 5:** Cole o código de EDA e predição no notebook.
-
-**Passo 6:** Substitua o caminho do arquivo no código com o caminho correto para o seu arquivo no computador:
-
-```python
-df = pd.read_csv('dfbruto.csv', sep=",")
-```
-
-**Passo 7:** Execute o código.
-
-### 5. Executando o código
-
-* Certifique-se de que você tenha o arquivo `dfbruto.csv` no Google Drive ou no diretório local do seu computador.
-* Modifique o caminho para o arquivo `dfbruto.csv` no código para corresponder ao local do seu arquivo.
-* Execute cada célula de código no notebook.
-
-### 6. Requisitos
-
-```
-pandas==1.5.3
-numpy==1.24.2
-matplotlib==3.6.2
-seaborn==0.12.2
-scikit-learn==1.2.2
-pickle==5.0
-```
-
-### 7. Considerações adicionais
-
-* Este código está configurado para usar o Pandas como a biblioteca principal para manipulação de dados.
-* Você pode usar outras bibliotecas para visualização de dados, como Plotly ou Seaborn.
-* É importante entender o código e as bibliotecas usadas para personalizar a análise conforme necessário.
-

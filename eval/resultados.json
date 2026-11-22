@@ -1,0 +1,213 @@
+{
+  "acertos": 21,
+  "total": 21,
+  "modelos": [
+    {
+      "modelo": "media",
+      "rmse": 0.2722,
+      "mae": 0.2185
+    },
+    {
+      "modelo": "linear",
+      "rmse": 0.2289,
+      "mae": 0.1813
+    },
+    {
+      "modelo": "random_forest",
+      "rmse": 0.1864,
+      "mae": 0.1474
+    },
+    {
+      "modelo": "gbm",
+      "rmse": 0.1908,
+      "mae": 0.1484
+    }
+  ],
+  "shawshank": 8.779,
+  "genero_top1": 0.673,
+  "importancia": [
+    {
+      "variavel": "No_of_Votes",
+      "aumento_rmse": 0.2035
+    },
+    {
+      "variavel": "Meta_score",
+      "aumento_rmse": 0.08
+    },
+    {
+      "variavel": "Gross",
+      "aumento_rmse": 0.064
+    },
+    {
+      "variavel": "Released_Year",
+      "aumento_rmse": 0.0595
+    },
+    {
+      "variavel": "Runtime",
+      "aumento_rmse": 0.048
+    },
+    {
+      "variavel": "Genre",
+      "aumento_rmse": 0.0167
+    },
+    {
+      "variavel": "Certificate",
+      "aumento_rmse": 0.0098
+    }
+  ],
+  "casos": [
+    {
+      "caso": "quantidade de filmes do Nolan",
+      "ok": true,
+      "obtido": 8,
+      "esperado": 8
+    },
+    {
+      "caso": "filme de maior faturamento",
+      "ok": true,
+      "obtido": "Star Wars: Episode VII - The Force Awakens",
+      "esperado": "Star Wars: Episode VII - The Force Awakens"
+    },
+    {
+      "caso": "duração mediana da base",
+      "ok": true,
+      "obtido": 119.0,
+      "esperado": 119.0
+    },
+    {
+      "caso": "nota média dos dramas",
+      "ok": true,
+      "obtido": 7.96,
+      "esperado": 7.96
+    },
+    {
+      "caso": "ano de Apollo 13 corrigido (base traz 'PG')",
+      "ok": true,
+      "obtido": 1995,
+      "esperado": 1995
+    },
+    {
+      "caso": "melhor modelo com RMSE de CV <= 0,20",
+      "ok": true,
+      "obtido": {
+        "random_forest": 0.1864
+      },
+      "esperado": "<= 0.20"
+    },
+    {
+      "caso": "melhor modelo supera linear e média",
+      "ok": true,
+      "obtido": {
+        "media": 0.2722,
+        "linear": 0.2289,
+        "random_forest": 0.1864,
+        "gbm": 0.1908
+      },
+      "esperado": "melhor < linear < media"
+    },
+    {
+      "caso": "Shawshank previsto entre 8,5 e 9,5",
+      "ok": true,
+      "obtido": 8.779,
+      "esperado": "[8.5, 9.5]"
+    },
+    {
+      "caso": "gênero principal pela sinopse (acerto top-1 em CV >= 0,60)",
+      "ok": true,
+      "obtido": 0.673,
+      "esperado": ">= 0.60"
+    },
+    {
+      "caso": "roteamento: Quais os filmes do Nolan?",
+      "ok": true,
+      "obtido": [
+        "consultar_filmes"
+      ],
+      "esperado": "consultar_filmes"
+    },
+    {
+      "caso": "roteamento: Liste os melhores filmes de animação",
+      "ok": true,
+      "obtido": [
+        "consultar_filmes"
+      ],
+      "esperado": "consultar_filmes"
+    },
+    {
+      "caso": "roteamento: Qual a nota média dos filmes de crime?",
+      "ok": true,
+      "obtido": [
+        "estatisticas"
+      ],
+      "esperado": "estatisticas"
+    },
+    {
+      "caso": "roteamento: Qual a nota prevista para The Shawshank Redemption?",
+      "ok": true,
+      "obtido": [
+        "prever_shawshank"
+      ],
+      "esperado": "prever_shawshank"
+    },
+    {
+      "caso": "roteamento: Compare os modelos pelo RMSE",
+      "ok": true,
+      "obtido": [
+        "comparar_modelos"
+      ],
+      "esperado": "comparar_modelos"
+    },
+    {
+      "caso": "roteamento: O que mais pesa na nota de um filme?",
+      "ok": true,
+      "obtido": [
+        "explicar_nota"
+      ],
+      "esperado": "explicar_nota"
+    },
+    {
+      "caso": "roteamento: Qual o gênero desta sinopse: A young wizard attends a school of magic and fights a dark lord.",
+      "ok": true,
+      "obtido": [
+        "genero_pela_sinopse"
+      ],
+      "esperado": "genero_pela_sinopse"
+    },
+    {
+      "caso": "roteamento: Me recomende um filme de comédia de até 100 min",
+      "ok": true,
+      "obtido": [
+        "recomendar"
+      ],
+      "esperado": "recomendar"
+    },
+    {
+      "caso": "roteamento: Quais fatores se relacionam com faturamento alto?",
+      "ok": true,
+      "obtido": [
+        "fatores_de_faturamento"
+      ],
+      "esperado": "fatores_de_faturamento"
+    },
+    {
+      "caso": "roteamento: Publique um relatório com os achados",
+      "ok": true,
+      "obtido": [
+        "publicar_relatorio"
+      ],
+      "esperado": "publicar_relatorio"
+    },
+    {
+      "caso": "número inventado é barrado",
+      "ok": true,
+      "obtido": "revisar",
+      "esperado": "revisar"
+    },
+    {
+      "caso": "número correto passa",
+      "ok": true,
+      "obtido": "ok",
+      "esperado": "ok"
+    }
+  ]
+}
