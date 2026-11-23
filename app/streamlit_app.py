@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import tema
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -15,7 +16,6 @@ sys.path.insert(0, str(ROOT / "src"))
 from filmeagent import core as C  # noqa: E402
 from filmeagent.tools import build_agent, t_prever  # noqa: E402
 
-RED, GREY = "#E3263B", "#9A8A8D"
 st.set_page_config(page_title="Filmes IMDb · agente", page_icon="🎬", layout="wide")
 
 
@@ -31,9 +31,12 @@ agent = get_agent()
 st.session_state.setdefault("pending", [])
 st.session_state.setdefault("log", [])
 
-st.title("Agente de filmes: notas do IMDb")
-st.caption("Consulta os 999 filmes da base, prevê a nota de um filme novo, explica o que pesa na nota e infere o gênero pela sinopse. "
-           "Os números vêm do pandas e do scikit-learn; o modelo de linguagem só interpreta.")
+tema.aplicar_tema(
+    "Agente de filmes: notas do IMDb",
+    "Consulta os 999 filmes da base, prevê a nota de um filme novo, explica o que pesa na nota e infere o gênero pela "
+    "sinopse. Os números vêm do pandas e do scikit-learn; o modelo de linguagem só interpreta.",
+    kicker="Agente de IA · cinema",
+    chips=["Gemini", "Random forest", "TF-IDF", "999 filmes do IMDb"])
 if agent.llm is None:
     st.info("Modo offline: sem GEMINI_API_KEY, o agente escolhe ferramentas por palavras-chave.", icon="🔌")
 
@@ -52,17 +55,17 @@ with tab_dash:
     with c1:
         st.subheader("Nota × número de votos")
         fig = px.scatter(df, x="No_of_Votes", y="IMDB_Rating", log_x=True, hover_name="Series_Title", opacity=0.55,
-                         color_discrete_sequence=[RED], labels={"No_of_Votes": "votos (escala log)", "IMDB_Rating": "nota"})
+                         color_discrete_sequence=[tema.cor(0)], labels={"No_of_Votes": "votos (escala log)", "IMDB_Rating": "nota"})
         fig.update_layout(height=360, margin={"l": 10, "r": 10, "t": 10, "b": 10})
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(tema.estilo_plotly(fig), use_container_width=True)
     with c2:
         st.subheader("Gêneros: quantidade e nota média")
         g = df.explode("generos").groupby("generos").agg(filmes=("Series_Title", "count"), nota=("IMDB_Rating", "mean"))
         g = g[g["filmes"] >= 15].sort_values("filmes")
-        fig2 = px.bar(g.reset_index(), x="filmes", y="generos", orientation="h", color="nota", color_continuous_scale=["#F4C7CD", RED],
+        fig2 = px.bar(g.reset_index(), x="filmes", y="generos", orientation="h", color="nota", color_continuous_scale=tema.sequencial(),
                       labels={"generos": "", "filmes": "filmes", "nota": "nota média"})
         fig2.update_layout(height=360, margin={"l": 10, "r": 10, "t": 10, "b": 10})
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(tema.estilo_plotly(fig2), use_container_width=True)
     c3, c4 = st.columns(2)
     with c3:
         st.subheader("Modelos (validação cruzada de 5 dobras)")
@@ -70,10 +73,10 @@ with tab_dash:
     with c4:
         st.subheader("O que pesa na nota")
         imp = pd.DataFrame(C.importance())
-        fig3 = px.bar(imp.sort_values("aumento_rmse"), x="aumento_rmse", y="variavel", orientation="h", color_discrete_sequence=[RED],
+        fig3 = px.bar(imp.sort_values("aumento_rmse"), x="aumento_rmse", y="variavel", orientation="h", color_discrete_sequence=[tema.cor(0)],
                       labels={"aumento_rmse": "aumento do RMSE ao embaralhar", "variavel": ""})
         fig3.update_layout(height=280, margin={"l": 10, "r": 10, "t": 10, "b": 10})
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(tema.estilo_plotly(fig3), use_container_width=True)
 
 with tab_pred:
     st.subheader("Prever a nota de um filme novo")
@@ -92,7 +95,7 @@ with tab_agent:
     st.subheader("Pergunte ao agente")
     ex = st.selectbox("Exemplos", ["", "Quais os filmes do Nolan?", "Qual a nota prevista para The Shawshank Redemption?",
                                    "O que mais pesa na nota de um filme?", "Me recomende um filme de comédia de até 100 min",
-                                   "Quais fatores se relacionam com faturamento alto?"])
+                                   "Quais fatores se relacionam com faturamento alto?"], placeholder="Escolha um exemplo")
     q = st.text_input("Pergunta", value=ex)
     if st.button("Perguntar", type="primary") and q.strip():
         r = agent.run(q)
